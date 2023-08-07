@@ -10,11 +10,6 @@ use Validator;
      
 class RegisterController extends Controller
 {
-    /**
-     * Register api
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -24,7 +19,7 @@ class RegisterController extends Controller
             'c_password' => 'required|same:password',
         ]);
      
-        if (!$validator->fails()) {
+        if (! $validator->fails()) {
             $input = $request->all();
             $input['password'] = bcrypt($input['password']);
             $user = User::create($input);
@@ -34,19 +29,26 @@ class RegisterController extends Controller
    
         return ResponseJson($success ?? null, 'User register successfully.');
     }
-     
-    /**
-     * Login api
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public function login(Request $request)
     {
-        if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
-            $user = Auth::user();
-            $success['token'] =  $user->createToken('MyApp')->accessToken;
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (! $validator->fails()) {
+            $check = Auth::attempt([
+                'email' => $request->email,
+                'password' => $request->password,
+            ]);
+
+            if ($check) {
+                $user = Auth::user();
+                $success['token'] =  $user->createToken('MyApp')->accessToken;
             $success['name'] =  $user->name;
-        } 
+            }
+        }
 
         return JsonResponse($success ?? null, 'User login successfully.');
     }
