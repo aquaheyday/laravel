@@ -11,7 +11,9 @@ class Reception extends Model
 
     protected $fillable = [
         'email',
+        'password',
         'type',
         'title',
+        'end',
     ];
 }

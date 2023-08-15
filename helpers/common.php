@@ -1,7 +1,7 @@
 <?php
 
-if (! function_exists('JsonResponse')) {
-    function JsonResponse($result, $message)
+if (! function_exists('Json')) {
+    function Json($result, $message)
     {
         $response = [
             'success' => true,

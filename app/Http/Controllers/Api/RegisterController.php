@@ -27,7 +27,7 @@ class RegisterController extends Controller
             $success['name'] =  $user->name;
         }
    
-        return ResponseJson($success ?? null, 'User register successfully.');
+        return Json($success ?? null, 'User register successfully.');
     }
 
     public function login(Request $request)
@@ -50,6 +50,6 @@ class RegisterController extends Controller
             }
         }
 
-        return JsonResponse($success ?? null, 'User login successfully.');
+        return Json($success ?? null, 'User login successfully.');
     }
 }
