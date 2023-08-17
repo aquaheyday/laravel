@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\ReceptionController;
 use App\Http\Controllers\Api\OrderController;
 
 Route::get('/', function() {
-    echo "test";
+    return Json(true);
 });
 
 //회원 가입
