@@ -69,6 +69,6 @@ class RegisterController extends Controller
             }
         }
 
-        return Json($success, $result);
+        return Json($success, $result ?? null);
     }
 }
