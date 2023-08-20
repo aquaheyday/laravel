@@ -12,6 +12,8 @@ class RegisterController extends Controller
 {
     public function register(Request $request)
     {
+        $success = false;
+
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'required|email',
@@ -19,19 +21,34 @@ class RegisterController extends Controller
             'c_password' => 'required|same:password',
         ]);
      
-        if (! $validator->fails()) {
-            $input = $request->all();
-            $input['password'] = bcrypt($input['password']);
-            $user = User::create($input);
-            $success['token'] =  $user->createToken('MyApp')->accessToken;
-            $success['name'] =  $user->name;
+        if ($validator->fails()) {
+            $message = $validator->errors()->first();
+        } else {
+            $password = bcrypt($request->password);
+            try {
+                $user = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => $password,
+                ]);
+
+                $result['token'] =  $user->createToken('MyApp')->accessToken;
+                $result['name'] =  $user->name;
+
+                $success = true;
+                
+            } catch(\Exception $e) {
+                $message = $e->getMessage();
+            }
         }
    
-        return Json($success ?? null, 'User register successfully.');
+        return Json($success, $result ?? null, $message ?? null);
     }
 
     public function login(Request $request)
     {
+        $success = false;
+
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required',
@@ -45,11 +62,13 @@ class RegisterController extends Controller
 
             if ($check) {
                 $user = Auth::user();
-                $success['token'] =  $user->createToken('MyApp')->accessToken;
-            $success['name'] =  $user->name;
+                $result['token'] =  $user->createToken('MyApp')->accessToken;
+                $result['name'] =  $user->name;
+
+                $success = true;
             }
         }
 
-        return Json($success ?? null, 'User login successfully.');
+        return Json($success, $result);
     }
 }
