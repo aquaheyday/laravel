@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Reception;
 
 class Order extends Model
 {
@@ -20,4 +21,8 @@ class Order extends Model
         'sub_menu_size',
         'detail',
     ];
+
+    public function reception() {
+        return $this->hasOne(Reception::class, 'id', 'receptions_id');
+    }
 }

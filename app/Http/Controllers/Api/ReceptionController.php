@@ -8,6 +8,7 @@ use App\Models\Reception;
 use App\Models\Order;
 use App\Models\Type;
 use Validator;
+use DB;
 
 class ReceptionController extends Controller
 {
@@ -21,33 +22,52 @@ class ReceptionController extends Controller
     }
 
     public function lists() {
-        $data = Reception::get();
+        $email = auth()->guard('api')->user()->email;
+
+        $list = Reception::with(['user' => function ($q) {
+            $q->select(
+                'name'
+                ,'email'
+            );
+        }])->get();
+
+        $data = [
+            'all' => $list
+            ,'create' => Reception::with(['user' => function ($q) {
+                $q->select(
+                    'name'
+                    ,'email'
+                );
+            }])->where('email', $email)->get()
+            ,'inside' => Order::with('reception.user')
+                ->where('email', $email)
+                ->get()
+        ];
+
         $success = true;
-        
         return Json($success, $data);
     }
 
     public function add(Request $request)
     {
+        $r = json_decode($request->getContent(), true);
+        $email = auth()->guard('api')->user()->email;
         $success = false;
 
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email'
+        $validator = Validator::make($r, [
+            //'type' => 'required'
+            'title' => 'required'
             ,'password' => 'required'
-            ,'title' => 'required'
-            ,'receptions_type' => 'required'
-            ,'end' => 'required'
         ]);
 
         if ($validator->fails()) {
             $message = $validator->errors()->first();
         } else {
             Reception::create([
-                'email' => $request->input('email')
-                ,'password' => $request->input('password')
-                ,'title' => $request->input('title')
-                ,'receptions_type' => $request->input('receptions_type')
-                ,'end' => $request->input('end')
+                'email' => $email
+                ,'receptions_type' => (int)$r['type']
+                ,'title' => $r['title']
+                ,'password' => $r['password']
             ]);
 
             $success = true;
