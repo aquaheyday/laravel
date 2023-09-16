@@ -7,21 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Order;
 use App\Models\User;
 
-class Reception extends Model
+class Room extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'id',
         'email',
-        'receptions_type',
+        'room_type',
         'password',
         'title',
         'end',
     ];
 
     public function orders() {
-        return $this->hasMany(Order::class, 'receptions_id', 'id');
+        return $this->hasMany(Order::class, 'room_id', 'id');
     }
 
     public function user() {
