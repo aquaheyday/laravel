@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Room;
 use App\Models\Type;
 use Validator;
+use DB;
 
 class OrderController extends Controller
 {
@@ -20,10 +21,40 @@ class OrderController extends Controller
 
     public function list($room_id)
     {
+
+        $menu = Order::leftJoin('users', 'users.email', 'orders.email')
+            ->select(
+                'orders.menu'
+                ,'orders.menu_type'
+                ,'orders.menu_size'
+                ,'orders.menu_detail'
+                ,DB::raw('count(*) as count')
+                ,DB::raw('group_concat(users.name) as name')
+            )
+            ->where('room_id', $room_id)
+            ->groupBy('menu', 'menu_type', 'menu_size', 'menu_detail')
+            ->get();
+
+        $user = Order::leftjoin('users', 'users.email', 'orders.email')
+                ->select(
+                    'users.name'
+                    ,'orders.menu'
+                    ,'orders.menu_type'
+                    ,'orders.menu_size'
+                    ,'orders.menu_detail'
+                    ,'orders.sub_menu'
+                    ,'orders.sub_menu_type'
+                    ,'orders.sub_menu_size'
+                    ,'orders.sub_menu_detail'
+                    ,'orders.pickup'
+                )
+                ->where('room_id', $room_id)
+                ->get();
+        
         $data = [
             'room' => Room::where('id', $room_id)->get()
-            ,'user' => Order::where('room_id', $room_id)->get()
-            ,'menu' => Order::where('room_id', $room_id)->get()
+            ,'user' => $user
+            ,'menu' => $menu
         ];
 
         $success = true;
