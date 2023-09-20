@@ -21,13 +21,16 @@ class RoomController extends Controller
 
     public function list()
     {
-        try {
-            $all = Room::with(['user' => function ($query) {
-                $query->select(
-                    'name'
-                    ,'email'
-                );
-            }])
+        //try {
+            $all = Room::with('user')
+            ->select(
+                'id',
+                'title',
+                'end',
+                'email',
+                DB::raw("if(email = '" . $this->email ."', true, false) as creater")
+            )
+            ->orderBy('id', 'desc')
             ->get();
     
             $create = Room::with(['user' => function ($query) {
@@ -36,11 +39,14 @@ class RoomController extends Controller
                     ,'email'
                 );
             }])
+            ->orderBy('id', 'desc')
             ->where('email', $this->email)
             ->get();
     
             $inside = Order::with('room.user')
+                ->has('room')
                 ->where('email', $this->email)
+                ->orderBy('room_id', 'desc')
                 ->get();
 
             $data = [
@@ -50,9 +56,9 @@ class RoomController extends Controller
             ];
             
             $success = true;
-        } catch(\Exception $e) {
+        /*} catch(\Exception $e) {
             $message = __('auth.error');
-        }
+        }*/
 
         return Json($success ?? false, $data ?? null, $message ?? null);
     }
@@ -148,18 +154,16 @@ class RoomController extends Controller
         }
 
         return Json($success, $data ?? null, $message ?? null);
-    }
+    }*/
 
     public function delete($id)
     {
-        $email = auth()->guard('api')->user()->email;
-
         Room::where('id', $id)
-            ->where('email', $email)
+            ->where('email', $this->email)
             ->delete();
 
         return Json(true);
-    }*/
+    }
     
     public function room($room_id, Request $request)
     {

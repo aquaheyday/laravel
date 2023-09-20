@@ -27,7 +27,7 @@ Route::middleware('auth:api')->group( function() {
         //특정 목록 수정
         //Route::put('{id}', [RoomController::class, 'edit']);
         //특정 목록 삭제
-        //Route::delete('{id}', [RoomController::class, 'delete']);
+        Route::delete('{id}', [RoomController::class, 'delete']);
     });
 
     Route::prefix('order')->group(function() {
