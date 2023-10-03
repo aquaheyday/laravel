@@ -21,6 +21,14 @@ class OrderController extends Controller
 
     public function list($room_id)
     {
+        $room = Room::select(
+            'id'
+            ,'room_type'
+            ,'title'
+            ,'end'
+            ,DB::raw("if(email = '" . $this->email ."', true, false) as creater")
+        )->where('id', $room_id)
+        ->get();
 
         $menu = Order::leftJoin('users', 'users.email', 'orders.email')
             ->select(
@@ -52,7 +60,7 @@ class OrderController extends Controller
                 ->get();
         
         $data = [
-            'room' => Room::where('id', $room_id)->get()
+            'room' => $room
             ,'user' => $user
             ,'menu' => $menu
         ];

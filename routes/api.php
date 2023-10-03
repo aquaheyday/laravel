@@ -28,6 +28,8 @@ Route::middleware('auth:api')->group( function() {
         //Route::put('{id}', [RoomController::class, 'edit']);
         //특정 목록 삭제
         Route::delete('{id}', [RoomController::class, 'delete']);
+        //방 마감
+        Route::put('{id}/{type}', [RoomController::class, 'state']);
     });
 
     Route::prefix('order')->group(function() {

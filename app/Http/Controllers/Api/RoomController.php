@@ -21,44 +21,61 @@ class RoomController extends Controller
 
     public function list()
     {
-        //try {
-            $all = Room::with('user')
+        try {
+            $all = Room::join('users', 'rooms.email', 'users.email')
+            ->leftJoin('orders', function($q) {
+                $q->on('rooms.id', 'orders.room_id')
+                    ->where('orders.email', $this->email);
+            })
             ->select(
-                'id',
-                'title',
-                'end',
-                'email',
-                DB::raw("if(email = '" . $this->email ."', true, false) as creater")
+                'rooms.id',
+                'rooms.title',
+                'rooms.end',
+                'rooms.email',
+                'users.name',
+                DB::raw("if(count(orders.email) > 0, true, false) as insider"),
+                DB::raw("if(rooms.email = '" . $this->email ."', true, false) as creater"),
             )
-            ->orderBy('id', 'desc')
+            ->groupBy('rooms.id')
+            ->orderBy('rooms.id', 'desc')
             ->get();
     
-            $create = Room::with(['user' => function ($query) {
-                $query->select(
-                    'name'
-                    ,'email'
-                );
-            }])
+            $inside = Room::join('users', 'rooms.email', 'users.email')
+            ->join('orders', function($q) {
+                $q->on('rooms.id', 'orders.room_id')
+                    ->where('orders.email', $this->email);
+            })
+            ->select(
+                'rooms.id',
+                'rooms.title',
+                'rooms.end',
+                'rooms.email',
+                'users.name',
+                DB::raw("if(rooms.email = '" . $this->email ."', true, false) as creater"),
+            )
+            ->groupBy('rooms.id')
+            ->orderBy('rooms.id', 'desc')
+            ->get();
+
+            $create = Room::select(
+                'rooms.id',
+                'rooms.title',
+                'rooms.end',
+            )
             ->orderBy('id', 'desc')
             ->where('email', $this->email)
             ->get();
-    
-            $inside = Order::with('room.user')
-                ->has('room')
-                ->where('email', $this->email)
-                ->orderBy('room_id', 'desc')
-                ->get();
 
             $data = [
                 'all' => $all
-                ,'create' => $create
                 ,'inside' => $inside
+                ,'create' => $create
             ];
             
             $success = true;
-        /*} catch(\Exception $e) {
+        } catch(\Exception $e) {
             $message = __('auth.error');
-        }*/
+        }
 
         return Json($success ?? false, $data ?? null, $message ?? null);
     }
@@ -170,7 +187,7 @@ class RoomController extends Controller
         $email = $this->email;
         $password = $request->header('password') ?? null;
 
-        //try {
+        try {
             $result = Room::with('orders')
                 ->when(is_null($password), function($q) use($email) {
                     $q->where('email', $email);
@@ -183,10 +200,49 @@ class RoomController extends Controller
 
             if (!is_null($result)) {
                 $success = true;
+            } else {
+                $message = __('auth.password');
             }
-        //} catch(\Exception $e) {
-            //$message = __('auth.error');
-        //}
+        } catch(\Exception $e) {
+            $message = __('auth.error');
+        }
+
+        return Json($success ?? false, $result ?? null, $message ?? null);
+    }
+
+    public function state($no, $type)
+    {
+        if (Room::where('email', $this->email)->where('id', $no)->exists()) {
+            if ($type == 'end') {
+                $state = 'Y';
+
+                $limit = ceil(Order::where('room_id', $no)->count() / 4);
+                $list = Order::where('room_id', $no)->inRandomOrder()->limit($limit)->get();
+                
+                foreach ($list as $item) {
+                    Order::where('id', $item->id)->update([
+                        'pickup' => 'Y'
+                    ]);
+                }
+            } else {
+                $state = 'N';
+
+                $list = Order::where('room_id', $no)->where('pickup', 'Y')->get();
+
+                foreach ($list as $item) {
+                    Order::where('id', $item->id)->update([
+                        'pickup' => 'N'
+                    ]);
+                }
+            }
+            Room::where('email', $this->email)->where('id', $no)->update([
+                'end' => $state
+            ]);
+
+            $success = true;
+        } else {
+            $message = __('auth.error');
+        }
 
         return Json($success ?? false, $result ?? null, $message ?? null);
     }

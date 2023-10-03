@@ -14,7 +14,7 @@ return [
     */
 
     'failed' => '아이디 또는 비밀번호를 확인해주세요.',
-    'password' => 'The provided password is incorrect.',
+    'password' => '비밀번호가 올바르지 않습니다.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
     'error' => '시스템 오류입니다. 관리자에게 문의 부탁드립니다.',
     'email' => '이미 등록된 이메일입니다.',
