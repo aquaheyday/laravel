@@ -249,7 +249,7 @@ class RoomController extends Controller
 
     public function chart() {
         try {
-            $list = Order::where('email', 'test@test.com')->get();
+            $list = Order::where('email', $this->email)->get();
 
             $order = Order::select(
                 DB::raw("ROUND((SUM(IF(pickup = 'Y', 1, 0)) / COUNT(*)) * 100) cnt")
