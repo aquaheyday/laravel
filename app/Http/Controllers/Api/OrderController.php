@@ -55,6 +55,7 @@ class OrderController extends Controller
                     ,'orders.sub_menu_size'
                     ,'orders.sub_menu_detail'
                     ,'orders.pickup'
+                    DB::raw("if(orders.email = '" . $this->email ."', true, false) as creater")
                 )
                 ->where('room_id', $room_id)
                 ->get();
