@@ -16,7 +16,7 @@ class RoomController extends Controller
 
     public function __construct()
     {
-        //$this->email = auth()->guard('api')->user()->email;
+        $this->email = auth()->guard('api')->user()->email;
     }
 
     public function list()
@@ -257,6 +257,27 @@ class RoomController extends Controller
             ->groupBy('email')
             ->get();
 
+            $result = [
+                'count' => [
+                    'pickup' => $list->where('pickup', 'Y')->count()
+                    ,'all' => $list->count()
+                ]
+                ,'rate' => [
+                    'user' => round((($list->where('pickup', 'Y')->count() > 0 ? $list->where('pickup', 'Y')->count() : 1) / $list->count()) * 100)
+                    ,'total' => round(($order->sum('cnt') > 0 ? $order->sum('cnt') : 1) / $order->count())
+                ]
+            ];
+
+            $success = true;
+        } catch(\Exception $e) {
+            $message = __('auth.error');
+        }
+
+        return Json($success ?? false, $result ?? null, $message ?? null);
+    }
+
+    public function top() {
+        try {
             $menuList = Order::select(
                 'menu'
                 ,DB::raw("count(*) as cnt")
@@ -279,18 +300,8 @@ class RoomController extends Controller
             ->get();
 
             $result = [
-                'count' => [
-                    'pickup' => $list->where('pickup', 'Y')->count()
-                    ,'all' => $list->count()
-                ]
-                ,'rate' => [
-                    'user' => round((($list->where('pickup', 'Y')->count() > 0 ? $list->where('pickup', 'Y')->count() : 1) / $list->count()) * 100)
-                    ,'total' => round(($order->sum('cnt') > 0 ? $order->sum('cnt') : 1) / $order->count())
-                ]
-                ,'list' => [
-                    'menu' => $menuList
-                    ,'email' => $emailList
-                ]
+                'menu' => $menuList
+                ,'email' => $emailList
             ];
 
             $success = true;

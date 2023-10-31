@@ -22,6 +22,8 @@ Route::middleware('auth:api')->group( function() {
         Route::get('/', [RoomController::class, 'list']);
         //목록 차트 조회
         Route::get('chart', [RoomController::class, 'chart']);
+        //목록 TOP 10 조희
+        Route::get('top', [RoomController::class, 'top']);
         //목록 생성
         Route::post('/', [RoomController::class, 'add']);
         //특정 목록 조회
