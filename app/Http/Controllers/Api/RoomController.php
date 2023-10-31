@@ -16,7 +16,7 @@ class RoomController extends Controller
 
     public function __construct()
     {
-        $this->email = auth()->guard('api')->user()->email;
+        //$this->email = auth()->guard('api')->user()->email;
     }
 
     public function list()
@@ -241,6 +241,60 @@ class RoomController extends Controller
 
             $success = true;
         } else {
+            $message = __('auth.error');
+        }
+
+        return Json($success ?? false, $result ?? null, $message ?? null);
+    }
+
+    public function chart() {
+        try {
+            $list = Order::where('email', $this->email)->get();
+
+            $order = Order::select(
+                DB::raw("ROUND((SUM(IF(pickup = 'Y', 1, 0)) / SUM(IF(pickup = 'N', 1, 0))) * 100) cnt")
+            )
+            ->groupBy('email')
+            ->get();
+
+            $menuList = Order::select(
+                'menu'
+                ,DB::raw("count(*) as cnt")
+            )
+            ->groupBy('menu')
+            ->orderBy('cnt', 'desc')
+            ->limit(10)
+            ->get();
+
+            $emailList = Order::select(
+                'orders.email'
+                ,DB::raw("count(orders.email) as cnt")
+                ,'users.name'
+            )
+            ->leftJoin('users', 'users.email', 'orders.email')
+            ->where('pickup', 'Y')
+            ->groupBy('email')
+            ->orderBy('cnt', 'desc')
+            ->limit(10)
+            ->get();
+
+            $result = [
+                'count' => [
+                    'pickup' => $list->where('pickup', 'Y')->count()
+                    ,'all' => $list->count()
+                ]
+                ,'rate' => [
+                    'user' => round(($list->where('pickup', 'Y')->count() ?? 1 / $list->count()) * 100)
+                    ,'total' => round($order->sum('cnt') ?? 1 / $order->count())
+                ]
+                ,'list' => [
+                    'menu' => $menuList
+                    ,'email' => $emailList
+                ]
+            ];
+
+            $success = true;
+        } catch(\Exception $e) {
             $message = __('auth.error');
         }
 
