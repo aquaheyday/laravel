@@ -249,10 +249,10 @@ class RoomController extends Controller
 
     public function chart() {
         try {
-            $list = Order::where('email', $this->email)->get();
+            $list = Order::where('email', 'test@test.com')->get();
 
             $order = Order::select(
-                DB::raw("ROUND((SUM(IF(pickup = 'Y', 1, 0)) / SUM(IF(pickup = 'N', 1, 0))) * 100) cnt")
+                DB::raw("ROUND((SUM(IF(pickup = 'Y', 1, 0)) / COUNT(*)) * 100) cnt")
             )
             ->groupBy('email')
             ->get();
@@ -284,8 +284,8 @@ class RoomController extends Controller
                     ,'all' => $list->count()
                 ]
                 ,'rate' => [
-                    'user' => round(($list->where('pickup', 'Y')->count() ?? 1 / $list->count()) * 100)
-                    ,'total' => round($order->sum('cnt') ?? 1 / $order->count())
+                    'user' => round((($list->where('pickup', 'Y')->count() > 0 ? $list->where('pickup', 'Y')->count() : 1) / $list->count()) * 100)
+                    ,'total' => round(($order->sum('cnt') > 0 ? $order->sum('cnt') : 1) / $order->count())
                 ]
                 ,'list' => [
                     'menu' => $menuList
