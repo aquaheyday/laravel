@@ -258,14 +258,10 @@ class RoomController extends Controller
             ->get();
 
             $result = [
-                'count' => [
-                    'pickup' => $list->where('pickup', 'Y')->count()
-                    ,'all' => $list->count()
-                ]
-                ,'rate' => [
-                    'user' => round((($list->where('pickup', 'Y')->count() > 0 ? $list->where('pickup', 'Y')->count() : 1) / $list->count()) * 100)
-                    ,'total' => round(($order->sum('cnt') > 0 ? $order->sum('cnt') : 1) / $order->count())
-                ]
+                'pickUpCount' => $list->where('pickup', 'Y')->count()
+                ,'allCount' => $list->count()
+                ,'userRate' => round((($list->where('pickup', 'Y')->count() > 0 ? $list->where('pickup', 'Y')->count() : 1) / $list->count()) * 100)
+                ,'totalRate' => round(($order->sum('cnt') > 0 ? $order->sum('cnt') : 1) / $order->count())
             ];
 
             $success = true;
