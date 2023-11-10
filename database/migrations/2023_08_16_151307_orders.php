@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->integer('room_id');
-            $table->string('email');
+            $table->integer('user_id');
             $table->string('menu');
             $table->string('menu_type');
             $table->string('menu_size');
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('sub_menu_type')->nullable();
             $table->string('sub_menu_size')->nullable();
             $table->string('sub_menu_detail')->nullable();
-            $table->string('pickup')->default('N');
+            $table->string('pick_up_yn')->default('N');
             $table->timestamps();
         });
     }

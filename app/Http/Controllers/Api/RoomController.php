@@ -12,20 +12,20 @@ use DB;
 
 class RoomController extends Controller
 {
-    protected $email;
+    protected $id;
 
     public function __construct()
     {
-        $this->email = auth()->guard('api')->user()->email;
+        $this->id = auth()->guard('api')->user()->id;
     }
 
     public function list()
     {
         try {
-            $all = Room::join('users', 'rooms.email', 'users.email')
+            $all = Room::join('users', 'rooms.user_id', 'users.email')
             ->leftJoin('orders', function($q) {
                 $q->on('rooms.id', 'orders.room_id')
-                    ->where('orders.email', $this->email);
+                    ->where('orders.user_id', $this->id);
             })
             ->select(
                 'rooms.id',
@@ -34,7 +34,7 @@ class RoomController extends Controller
                 'rooms.email',
                 'users.name',
                 DB::raw("if(count(orders.email) > 0, true, false) as insider"),
-                DB::raw("if(rooms.email = '" . $this->email ."', true, false) as creater"),
+                DB::raw("if(rooms.user_id = '" . $this->id ."', true, false) as creater"),
             )
             ->groupBy('rooms.id')
             ->orderBy('rooms.id', 'desc')

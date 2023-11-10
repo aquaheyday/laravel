@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
-            $table->string('email');
-            $table->string('room_type');
+            $table->integer('user_id');
+            $table->string('type');
             $table->string('password');
             $table->string('title');
-            $table->string('end')->default('N');
+            $table->string('end_yn')->default('N');
+            $table->string('token')->unique();
             $table->timestamps();
         });
     }

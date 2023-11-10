@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\UserController;
 
 Route::get('/', function() {
     return Json(true);
@@ -46,4 +47,9 @@ Route::middleware('auth:api')->group( function() {
         //메뉴 삭제
         Route::delete('{id}', [OrderController::class, 'delete']);
     });
-});                                                                                             
+
+    Route::prefix('user')->group(function() {
+        //사용자 정보 조회
+        Route::get('/', [UserController::class, 'info']);
+    });
+});
