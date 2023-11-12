@@ -13,11 +13,12 @@ class Room extends Model
 
     protected $fillable = [
         'id',
-        'email',
-        'room_type',
+        'user_id',
+        'type',
         'password',
         'title',
-        'end',
+        'end_yn',
+        'token'
     ];
 
     public function orders() {
@@ -25,6 +26,6 @@ class Room extends Model
     }
 
     public function user() {
-        return $this->hasOne(User::class, 'email', 'email');
+        return $this->hasOne(User::class, 'id', 'uesr_id');
     }
 }

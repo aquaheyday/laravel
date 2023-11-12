@@ -13,7 +13,7 @@ class Order extends Model
 
     protected $fillable = [
         'room_id',
-        'email',
+        'user_id',
         'menu',
         'menu_type',
         'menu_size',
@@ -22,7 +22,7 @@ class Order extends Model
         'sub_menu_type',
         'sub_menu_size',
         'sub_menu_detail',
-        'pickup',
+        'pick_up_yn',
     ];
 
     public function room() {
@@ -30,6 +30,6 @@ class Order extends Model
     }
 
     public function user() {
-        return $this->hasOne(User::class, 'email', 'email');
+        return $this->hasOne(User::class, 'id', 'user_id');
     }
 }

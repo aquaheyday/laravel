@@ -28,20 +28,20 @@ Route::middleware('auth:api')->group( function() {
         //목록 생성
         Route::post('/', [RoomController::class, 'add']);
         //특정 목록 조회
-        Route::get('{id}', [RoomController::class, 'room']);
+        Route::get('{token}', [RoomController::class, 'room']);
         //특정 목록 수정
         //Route::put('{id}', [RoomController::class, 'edit']);
         //특정 목록 삭제
-        Route::delete('{id}', [RoomController::class, 'delete']);
+        Route::delete('{token}', [RoomController::class, 'delete']);
         //방 마감
-        Route::put('{id}/{type}', [RoomController::class, 'state']);
+        Route::put('{token}/{type}', [RoomController::class, 'state']);
     });
 
     Route::prefix('order')->group(function() {
         //메뉴 접수 목록 조회
-        Route::get('{room_id}', [OrderController::class, 'list']);
+        Route::get('{token}', [OrderController::class, 'list']);
         //메뉴 접수
-        Route::post('{room_id}', [OrderController::class, 'add']);
+        Route::post('{token}', [OrderController::class, 'add']);
         //메뉴 수정
         Route::put('{id}', [OrderController::class, 'edit']);
         //메뉴 삭제

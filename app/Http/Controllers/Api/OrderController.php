@@ -12,25 +12,29 @@ use DB;
 
 class OrderController extends Controller
 {
-    protected $email;
+    protected $id;
 
     public function __construct()
     {
-        $this->email = auth()->guard('api')->user()->email;
+        $this->id = auth()->guard('api')->user()->id;
     }
 
-    public function list($room_id)
+    public function list($token)
     {
         $room = Room::select(
             'id'
-            ,'room_type'
+            ,'type'
             ,'title'
-            ,'end'
-            ,DB::raw("if(email = '" . $this->email ."', true, false) as creater")
-        )->where('id', $room_id)
+            ,'end_yn'
+            ,DB::raw("if(user_id = '" . $this->id ."', 'Y', 'N') as create_yn")
+        )->where('token', $token)
         ->get();
 
-        $menu = Order::leftJoin('users', 'users.email', 'orders.email')
+        $menu = Order::join('rooms', function ($q) use ($token) {
+            $q->on('rooms.id', 'orders.room_id')
+            ->where('rooms.token', $token);
+        })
+            ->leftJoin('users', 'users.id', 'orders.user_id')
             ->select(
                 'orders.menu'
                 ,'orders.menu_type'
@@ -39,11 +43,14 @@ class OrderController extends Controller
                 ,DB::raw('count(*) as count')
                 ,DB::raw('group_concat(users.name) as name')
             )
-            ->where('room_id', $room_id)
             ->groupBy('menu', 'menu_type', 'menu_size', 'menu_detail')
             ->get();
 
-        $user = Order::leftjoin('users', 'users.email', 'orders.email')
+        $user = Order::join('rooms', function ($q) use ($token) {
+            $q->on('rooms.id', 'orders.room_id')
+            ->where('rooms.token', $token);
+        })
+        ->leftjoin('users', 'users.id', 'orders.user_id')
                 ->select(
                     'users.name'
                     ,'orders.menu'
@@ -54,10 +61,9 @@ class OrderController extends Controller
                     ,'orders.sub_menu_type'
                     ,'orders.sub_menu_size'
                     ,'orders.sub_menu_detail'
-                    ,'orders.pickup'
-                    ,DB::raw("if(orders.email = '" . $this->email ."', true, false) as creater")
+                    ,'orders.pick_up_yn'
+                    ,DB::raw("if(orders.user_id = '" . $this->id ."', 'Y', 'N') as create_yn")
                 )
-                ->where('room_id', $room_id)
                 ->get();
         
         $data = [
@@ -71,11 +77,11 @@ class OrderController extends Controller
         return Json($success ?? false, $data ?? null, $message ?? null);
     }
 
-    public function add($room_id, Request $request)
+    public function add($token, Request $request)
     {
-        $check = Room::where('id', $room_id)->where('end', 'N')->exists();
+        $check = Room::where('token', $token)->where('end_yn', 'N')->first();
 
-        if ($check) {
+        if (!is_null($check)) {
             $validator = Validator::make($request->all(), [
                 'menu' => 'required'
                 ,'menu_type' => 'required'
@@ -84,8 +90,8 @@ class OrderController extends Controller
     
             if (!$validator->fails()) {
                 Order::create([
-                    'room_id' => $room_id
-                    ,'email' => $this->email
+                    'room_id' => $check->id
+                    ,'user_id' => $this->id
                     ,'menu' => $request->input('menu')
                     ,'menu_type' => $request->input('menu_type')
                     ,'menu_size' => $request->input('menu_size')
@@ -109,18 +115,16 @@ class OrderController extends Controller
 
     public function edit($id, Request $request)
     {
-        $email = auth()->guard('api')->user()->email;
-
         $order = Order::where('id', $id)
-            ->where('email', $email)
+            ->where('user_id', $this->id)
             ->first();
 
         if (!is_null($order)) {
-            if (Room::where('id', $order->receptions_id)->where('end', 'N')->exists()) {
+            if (Room::where('id', $order->room_id)->where('end_yn', 'N')->exists()) {
                 $update = $request->all();
     
                 Order::where('id', $order->id)
-                ->where('email', $order->email)
+                ->where('user_id', $this->id)
                 ->update($update);
     
             } else {
@@ -133,10 +137,8 @@ class OrderController extends Controller
 
     public function delete($id)
     {
-        $email = auth()->guard('api')->user()->email;
-
         Order::where('id', $id)
-            ->where('email', $email)
+            ->where('user_id', $this->id)
             ->delete();
 
         return Json(true);

@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\Type;
 use Validator;
 use DB;
+use Str;
 
 class RoomController extends Controller
 {
@@ -22,7 +23,8 @@ class RoomController extends Controller
     public function list()
     {
         try {
-            $all = Room::join('users', 'rooms.user_id', 'users.email')
+            //전체 리스트
+            $all = Room::join('users', 'rooms.user_id', 'users.id')
             ->leftJoin('orders', function($q) {
                 $q->on('rooms.id', 'orders.room_id')
                     ->where('orders.user_id', $this->id);
@@ -30,40 +32,43 @@ class RoomController extends Controller
             ->select(
                 'rooms.id',
                 'rooms.title',
-                'rooms.end',
-                'rooms.email',
+                'rooms.end_yn',
+                'rooms.token',
                 'users.name',
-                DB::raw("if(count(orders.email) > 0, true, false) as insider"),
-                DB::raw("if(rooms.user_id = '" . $this->id ."', true, false) as creater"),
+                DB::raw("if(count(orders.user_id) > 0, 'Y', 'N') as inside_yn"),
+                DB::raw("if(rooms.user_id = '" . $this->id ."', 'Y', 'N') as create_yn"),
             )
             ->groupBy('rooms.id')
             ->orderBy('rooms.id', 'desc')
             ->get();
     
-            $inside = Room::join('users', 'rooms.email', 'users.email')
+            //주문을 했던 리스트
+            $inside = Room::join('users', 'rooms.user_id', 'users.id')
             ->join('orders', function($q) {
                 $q->on('rooms.id', 'orders.room_id')
-                    ->where('orders.email', $this->email);
+                    ->where('orders.user_id', $this->id);
             })
             ->select(
                 'rooms.id',
                 'rooms.title',
-                'rooms.end',
-                'rooms.email',
+                'rooms.end_yn',
+                'rooms.token',
                 'users.name',
-                DB::raw("if(rooms.email = '" . $this->email ."', true, false) as creater"),
+                DB::raw("if(rooms.user_id = '" . $this->id ."', true, false) as create_yn"),
             )
             ->groupBy('rooms.id')
             ->orderBy('rooms.id', 'desc')
             ->get();
 
+            //생성한 리스트
             $create = Room::select(
                 'rooms.id',
                 'rooms.title',
-                'rooms.end',
+                'rooms.end_yn',
+                'rooms.token',
             )
             ->orderBy('id', 'desc')
-            ->where('email', $this->email)
+            ->where('user_id', $this->id)
             ->get();
 
             $data = [
@@ -92,24 +97,20 @@ class RoomController extends Controller
 
         if (!$validator->fails()) {
             try {
+                //토큰 생성
+                $token = hash('sha256', Str::random(60));
+
                 //방 생성
-                Room::create([
-                    'email' => $this->email
-                    ,'room_type' => $data['type']
+                $test = Room::create([
+                    'user_id' => $this->id
+                    ,'type' => $data['type']
                     ,'title' => $data['title']
                     ,'password' => $data['password']
+                    ,'token' => $token
                 ]);
 
-                //방 정보 조회
-                $room = Room::select('id')
-                    ->where('email', $this->email)
-                    ->where('room_type', $data['type'])
-                    ->where('title', $data['title'])
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-
                 $result = [
-                    'room_id' => $room->id
+                    'token' => $token
                 ];
     
                 $success = true;
@@ -123,79 +124,29 @@ class RoomController extends Controller
         return Json($success ?? false, $result ?? null, $message ?? null);
     }
 
-    /*public function edit($id, Request $request)
+    public function delete($token)
     {
-        $success = false;
-
-        $email = auth()->guard('api')->user()->email;
-
-        $reception = Room::where('id', $id)
-            ->where('email', $email)
-            ->first();
-
-        if (!is_null($reception)) {
-            if ($request->has('end')) {
-                if ($request->input('end') == 'Y') {
-                    $pickUpCount = ceil(Order::where('room_id', $id)->count() / 4);
-
-                    $data = Order::where('room_id', $id)
-                        ->inRandomOrder()
-                        ->limit($pickUpCount)
-                        ->get();
-
-                    if ($data->count() > 0) {
-                        foreach($data as $item) {
-                            Order::where('room_id', $id)
-                                ->where('email', $item->email)
-                                ->update([
-                                    'pickup' => 'Y'
-                                ]);
-                        }
-                    }
-                } else {
-                    Order::where('room_id', $id)
-                        ->where('pickup', 'Y')
-                        ->update([
-                            'pickup' => 'N'
-                        ]);
-                }
-            }
-
-            $update = $request->all();
-
-            Room::where('id', $id)
-                ->where('email', $email)
-                ->update($update);
-
-            $success = true;
-        }
-
-        return Json($success, $data ?? null, $message ?? null);
-    }*/
-
-    public function delete($id)
-    {
-        Room::where('id', $id)
-            ->where('email', $this->email)
+        Room::where('token', $token)
+            ->where('user_id', $this->id)
             ->delete();
 
         return Json(true);
     }
     
-    public function room($room_id, Request $request)
+    public function room($token, Request $request)
     {
-        $email = $this->email;
+        $id = $this->id;
         $password = $request->header('password') ?? null;
 
         try {
             $result = Room::with('orders')
-                ->when(is_null($password), function($q) use($email) {
-                    $q->where('email', $email);
+                ->when(is_null($password), function($q) use($id) {
+                    $q->where('user_id', $id);
                 })
                 ->when(!is_null($password), function($q) use($password) {
                     $q->where('password', $password);
                 })
-                ->where('id', $room_id)
+                ->where('token', $token)
                 ->first();
 
             if (!is_null($result)) {
@@ -210,33 +161,37 @@ class RoomController extends Controller
         return Json($success ?? false, $result ?? null, $message ?? null);
     }
 
-    public function state($no, $type)
+    public function state($token, $type)
     {
-        if (Room::where('email', $this->email)->where('id', $no)->exists()) {
+        $room = Room::where('user_id', $this->id)->where('token', $token)->first();
+
+        if (!is_null($room)) {
             if ($type == 'end') {
                 $state = 'Y';
 
-                $limit = ceil(Order::where('room_id', $no)->count() / 4);
-                $list = Order::where('room_id', $no)->inRandomOrder()->limit($limit)->get();
+                $limit = ceil(Order::where('room_id', $room->id)->count() / 4);
+                $list = Order::where('room_id', $room->id)->inRandomOrder()->limit($limit)->get();
                 
                 foreach ($list as $item) {
                     Order::where('id', $item->id)->update([
-                        'pickup' => 'Y'
+                        'pick_up_yn' => 'Y'
                     ]);
                 }
             } else {
                 $state = 'N';
 
-                $list = Order::where('room_id', $no)->where('pickup', 'Y')->get();
+                $list = Order::where('room_id', $room->id)->where('pick_up_yn', 'Y')->get();
 
                 foreach ($list as $item) {
                     Order::where('id', $item->id)->update([
-                        'pickup' => 'N'
+                        'pick_up_yn' => 'N'
                     ]);
                 }
             }
-            Room::where('email', $this->email)->where('id', $no)->update([
-                'end' => $state
+
+            //주문 오픈 or 마감 처리
+            Room::where('user_id', $this->id)->where('token', $token)->update([
+                'end_yn' => $state
             ]);
 
             $success = true;
@@ -249,18 +204,18 @@ class RoomController extends Controller
 
     public function chart() {
         try {
-            $list = Order::where('email', $this->email)->get();
+            $list = Order::where('user_id', $this->id)->get();
 
             $order = Order::select(
-                DB::raw("ROUND((SUM(IF(pickup = 'Y', 1, 0)) / COUNT(*)) * 100) cnt")
+                DB::raw("ROUND((SUM(IF(pick_up_yn = 'Y', 1, 0)) / COUNT(*)) * 100) cnt")
             )
-            ->groupBy('email')
+            ->groupBy('user_id')
             ->get();
 
             $result = [
-                'pickUpCount' => $list->where('pickup', 'Y')->count()
+                'pickUpCount' => $list->where('pick_up_yn', 'Y')->count()
                 ,'allCount' => $list->count()
-                ,'userRate' => round(($list->where('pickup', 'Y')->count() / ($list->count() > 0 ? $list->count() : 1)) * 100)
+                ,'userRate' => round(($list->where('pick_up_yn', 'Y')->count() / ($list->count() > 0 ? $list->count() : 1)) * 100)
                 ,'totalRate' => round($order->sum('cnt') / ($order->count() > 0 ? $order->count() : 1))
             ];
 
@@ -284,13 +239,13 @@ class RoomController extends Controller
             ->get();
 
             $emailList = Order::select(
-                'orders.email'
-                ,DB::raw("count(orders.email) as cnt")
+                'orders.user_id'
+                ,DB::raw("count(orders.user_id) as cnt")
                 ,'users.name'
             )
-            ->leftJoin('users', 'users.email', 'orders.email')
-            ->where('pickup', 'Y')
-            ->groupBy('email')
+            ->leftJoin('users', 'users.id', 'orders.user_id')
+            ->where('pick_up_yn', 'Y')
+            ->groupBy('user_id')
             ->orderBy('cnt', 'desc')
             ->limit(10)
             ->get();
