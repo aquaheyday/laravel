@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Validator;
+use Laravel\Passport\Passport;
      
 class RegisterController extends Controller
 {
@@ -74,9 +75,15 @@ class RegisterController extends Controller
                     //계정 로그인
                     $user = Auth::user();
                     //토큰 생성
-                    $result['token'] =  $user->createToken('MyApp')->accessToken;
+                    $token_result = $user->createToken('MyApp');
+                    $result['token'] =  $token_result->accessToken;
                     $result['name'] =  $user->name;
 
+                    if (!$request->check) {
+                        $token = $token_result->token;
+                        $token->expires_at = now()->addHours(1);
+                        $token->save();
+                    }
                     $success = true;
                 } else {
                     $message = __('auth.failed');

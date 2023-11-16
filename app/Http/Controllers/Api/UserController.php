@@ -9,23 +9,24 @@ use DB;
      
 class UserController extends Controller
 {
-    protected $email;
+    protected $id;
 
     public function __construct()
     {
-        $this->email = auth()->guard('api')->user()->email;
+        $this->id = auth()->guard('api')->user()->id;
     }
 
     public function info() {
 
-        $userInfo = User::select(
+        $data = User::select(
             'users.name'
             ,'users.email'
-            ,DB::raw("count('orders.email') as totalCount")
-            ,DB::raw("sum(if(orders.pickup = 'Y', 1, 0)) as pickupCount")
+            ,'users.image_path'
+            ,DB::raw("count('orders.id') as total_count")
+            ,DB::raw("sum(if(orders.pick_up_yn = 'Y', 1, 0)) as pick_up_count")
         )
-        ->leftJoin('orders', 'users.email', 'orders.email')
-        ->where('users.email', $this->email)
+        ->leftJoin('orders', 'users.id', 'orders.id')
+        ->where('users.id', $this->id)
         ->first();
 
         $success = true;
