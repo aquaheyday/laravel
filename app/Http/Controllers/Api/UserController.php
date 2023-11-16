@@ -22,7 +22,7 @@ class UserController extends Controller
             'users.name'
             ,'users.email'
             ,'users.image_path'
-            ,DB::raw("count('orders.id') as total_count")
+            ,DB::raw("sum(if('orders.id' != null, 1, 0)) as total_count")
             ,DB::raw("sum(if(orders.pick_up_yn = 'Y', 1, 0)) as pick_up_count")
         )
         ->leftJoin('orders', 'users.id', 'orders.id')
