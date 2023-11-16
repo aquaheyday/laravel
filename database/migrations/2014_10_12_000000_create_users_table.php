@@ -18,6 +18,10 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('image_path');
+            $table->string('number', 20);
+            $table->string('email_agree_yn', 1)->default('N');
+            $table->string('number_agree_yn', 1)->default('N');
+            $table->string('state_yn', 1)->default('Y');
             $table->rememberToken();
             $table->timestamps();
         });

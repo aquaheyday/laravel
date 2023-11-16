@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('sub_menu_type')->nullable();
             $table->string('sub_menu_size')->nullable();
             $table->string('sub_menu_detail')->nullable();
-            $table->string('pick_up_yn')->default('N');
+            $table->string('pick_up_yn', 1)->default('N');
             $table->timestamps();
         });
     }

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('type');
             $table->string('type_value');
             $table->string('type_desc');
-            $table->string('use_yn')->default('Y');
+            $table->string('use_yn', 1)->default('Y');
             $table->timestamps();
         });
     }

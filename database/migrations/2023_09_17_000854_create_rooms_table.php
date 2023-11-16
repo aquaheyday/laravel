@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('type');
             $table->string('password');
             $table->string('title');
-            $table->string('end_yn')->default('N');
+            $table->string('end_yn', 1)->default('N');
             $table->string('token')->unique();
             $table->timestamps();
         });
