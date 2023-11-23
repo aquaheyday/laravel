@@ -18,6 +18,8 @@ class OrderController extends Controller
     {
         if (auth()->guard('api')->check()) {
             $this->id = auth()->guard('api')->user()->id;
+        } else {
+            response()->json([], 401, [], JSON_UNESCAPED_UNICODE);
         }
     }
 
