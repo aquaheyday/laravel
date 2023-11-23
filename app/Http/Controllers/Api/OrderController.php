@@ -53,6 +53,7 @@ class OrderController extends Controller
         ->leftjoin('users', 'users.id', 'orders.user_id')
                 ->select(
                     'users.name'
+                    ,'users.image_path'
                     ,'orders.menu'
                     ,'orders.menu_type'
                     ,'orders.menu_size'
