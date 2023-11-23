@@ -16,7 +16,9 @@ class OrderController extends Controller
 
     public function __construct()
     {
-        $this->id = auth()->guard('api')->user()->id;
+        if (auth()->guard('api')->check()) {
+            $this->id = auth()->guard('api')->user()->id;
+        }
     }
 
     public function list($token)

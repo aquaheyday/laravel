@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function() {
     return Json(true);
-});
+})->name('login');
 
 //회원 가입
 Route::post('register', [RegisterController::class, 'register']);
@@ -57,6 +57,4 @@ Route::middleware('auth:api')->group( function() {
     });
 });
 
-Route::get('/sym', function () {
-    Artisan::call('storage:link');
-});
+
