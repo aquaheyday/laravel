@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\UserController;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function() {
     return Json(true);
@@ -51,5 +52,11 @@ Route::middleware('auth:api')->group( function() {
     Route::prefix('user')->group(function() {
         //사용자 정보 조회
         Route::get('/', [UserController::class, 'info']);
+        //사용자 정보 업데이트
+        Route::put('{type}', [UserController::class, 'update']);
     });
+});
+
+Route::get('/sym', function () {
+    Artisan::call('storage:link');
 });
