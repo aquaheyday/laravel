@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function() {
     return Json(true);
-})->name('login');
+});
 
 //회원 가입
 Route::post('register', [RegisterController::class, 'register']);
