@@ -14,6 +14,10 @@ Route::get('/', function() {
 
 //회원 가입
 Route::post('register', [RegisterController::class, 'register']);
+//이메일 찾기
+Route::post('eamil', [RegisterController::class, 'email']);
+//비밀번호 찾기
+Route::post('password', [RegisterController::class, 'password']);
 //로그인
 Route::post('login', [RegisterController::class, 'login']);
 

@@ -55,6 +55,54 @@ class RegisterController extends Controller
         return Json($success ?? false, $result ?? null, $message ?? null);
     }
 
+    public function email(Request $request)
+    {
+        //유효성 검사
+        $validator = Validator::make($request->all(), [
+            'number' => 'required',
+        ]);
+
+        if (!$validator->fails()) {
+            $user = User::where('number', $request->number)->first();
+
+            $result['email'] = is_null($user) ? null : $user->email;
+
+            $success = true;
+        }
+
+        return Json($success ?? false, $result ?? null, $message ?? null);
+    }
+
+    public function password(Request $request)
+    {
+        //유효성 검사
+        $validator = Validator::make($request->all(), [
+            'email' => 'required',
+        ]);
+
+        if (!$validator->fails()) {
+            $user = User::where('email', $request->email)->first();
+            $result['password'] = null;
+            
+            if (!is_null($user)) {
+                $pool = '0123456789abcdefghijklmnopqrstuvwxyz';
+
+                $password = substr(str_shuffle(str_repeat($pool, 5)), 0, 5);
+
+                User::where('email', $request->email)->update([
+                    'password' => bcrypt($password)
+                ]);
+
+                $result['password'] = $password;
+
+            }
+
+            $success = true;
+        }
+
+        return Json($success ?? false, $result ?? null, $message ?? null);
+    }
+
     public function login(Request $request)
     {
         //유효성 검사
